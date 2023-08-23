@@ -6,7 +6,7 @@ from copy import deepcopy
 from dataclasses import dataclass, replace
 from inspect import Signature, getmembers, isclass, ismethod
 from itertools import chain
-from typing import Any
+from typing import Any, Dict
 
 from typing_extensions import Self, get_type_hints
 
@@ -140,6 +140,22 @@ class ParsedSignature:
             parameters={p.name: p for p in parameters},
             return_type=return_type if "return" in fn_type_hints else replace(return_type, annotation=Empty),
             original_signature=signature,
+        )
+
+    def replace_annotation_by_names(
+        self,
+        annotation_name_to_concrete_type: Dict[Any, type[Any]],
+    ):
+        def replace_annotation(field: FieldDefinition):
+            if concrete_type := annotation_name_to_concrete_type.get(field.annotation.__name__):
+                return FieldDefinition.from_annotation(concrete_type, name=field.name)
+            else:
+                return field
+
+        return self.__class__(
+            parameters={k: replace_annotation(v) for k, v in self.parameters.items()},
+            return_type=replace_annotation(self.return_type),
+            original_signature=self,
         )
 
 

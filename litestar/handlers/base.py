@@ -218,9 +218,10 @@ class BaseRouteHandler:
             A ParsedSignature instance
         """
         if self._parsed_fn_signature is Empty:
-            self._parsed_fn_signature = ParsedSignature.from_fn(
-                unwrap_partial(self.fn.value), self.resolve_signature_namespace()
-            )
+            namespace = self.resolve_signature_namespace()
+            signature = ParsedSignature.from_fn(unwrap_partial(self.fn.value), namespace)
+            signature = signature.replace_annotation_by_names(namespace)
+            self._parsed_fn_signature = signature
 
         return cast("ParsedSignature", self._parsed_fn_signature)
 
